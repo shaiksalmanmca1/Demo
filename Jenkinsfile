@@ -23,15 +23,20 @@ pipeline {
                     sh """
                         ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} '
                             cd ~/Demo
+                            
                             docker rm -f backend frontend || true
+                            docker rmi -f ${BACKEND_IMAGE} ${FRONTEND_IMAGE} || true
+                            
                             cd backend
-                            docker build -t ${BACKEND_IMAGE} .
+                            docker build --no-cache -t ${BACKEND_IMAGE} .
                             docker run -d -p ${BACKEND_PORT}:8080 --name backend ${BACKEND_IMAGE}
+                            
                             cd ../frontend
                             if [ -f .env ]; then
+                                chmod +w .env
                                 sed -i "s|http://backend:8080|http://${EC2_HOST}:${BACKEND_PORT}|g" .env
                             fi
-                            docker build -t ${FRONTEND_IMAGE} .
+                            docker build --no-cache -t ${FRONTEND_IMAGE} .
                             docker run -d -p ${FRONTEND_PORT}:80 --name frontend ${FRONTEND_IMAGE}
                         '
                     """
