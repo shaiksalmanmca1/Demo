@@ -22,42 +22,44 @@ pipeline {
             steps {
                 sshagent(credentials: ['ec2-ssh-key']) {
                     sh """
-                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} '
-                            echo ">>> Removing old containers and images"
+                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "
+                            echo '>>> Removing old containers and images'
                             docker rm -f backend frontend || true
                             docker rmi -f ${BACKEND_IMAGE} ${FRONTEND_IMAGE} || true
-                            
-                            echo ">>> Checking existing Demo folder before deletion"
-                            ls -ld ~/Demo || echo "No Demo folder found"
 
-                            echo ">>> Deleting existing Demo folder"
-                            rm -rf ~/Demo
+                            echo '>>> Checking existing Demo folder before deletion'
+                            ls -ld /home/${EC2_USER}/Demo || echo 'No Demo folder found'
 
-                            echo ">>> Verifying Demo folder deletion"
-                            ls -ld ~/Demo || echo "Demo folder successfully deleted"
+                            echo '>>> Deleting existing Demo folder'
+                            rm -rf /home/${EC2_USER}/Demo
 
-                            echo ">>> Cloning fresh repo"
-                            git clone ${GIT_REPO} ~/Demo
+                            echo '>>> Verifying Demo folder deletion'
+                            ls -ld /home/${EC2_USER}/Demo || echo 'Demo folder successfully deleted'
 
-                            echo ">>> Listing cloned files"
-                            ls -l ~/Demo
+                            echo '>>> Cloning fresh repo'
+                            git clone ${GIT_REPO} /home/${EC2_USER}/Demo
 
-                            cd ~/Demo/backend
-                            echo ">>> Building backend image"
+                            echo '>>> Listing cloned files'
+                            ls -l /home/${EC2_USER}/Demo
+
+                            cd /home/${EC2_USER}/Demo/backend
+                            echo '>>> Building backend image'
                             docker build --no-cache -t ${BACKEND_IMAGE} .
-                            echo ">>> Running backend container"
+                            echo '>>> Running backend container'
                             docker run -d -p ${BACKEND_PORT}:8080 --name backend ${BACKEND_IMAGE}
 
                             cd ../frontend
                             if [ -f .env ]; then
                                 chmod +w .env
-                                sed -i "s|http://backend:8080|http://${EC2_HOST}:${BACKEND_PORT}|g" .env
+                                sed -i 's|http://backend:8080|http://${EC2_HOST}:${BACKEND_PORT}|g' .env
                             fi
-                            echo ">>> Building frontend image"
+                            echo '>>> Building frontend image'
                             docker build --no-cache -t ${FRONTEND_IMAGE} .
-                            echo ">>> Running frontend container"
+                            echo '>>> Running frontend container'
                             docker run -d -p ${FRONTEND_PORT}:80 --name frontend ${FRONTEND_IMAGE}
-                        '
+
+                            echo '>>> Deployment finished'
+                        "
                     """
                 }
             }
