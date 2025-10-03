@@ -23,19 +23,39 @@ pipeline {
                 sshagent(credentials: ['ec2-ssh-key']) {
                     sh """
                         ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} '
+                            echo ">>> Removing old containers and images"
                             docker rm -f backend frontend || true
                             docker rmi -f ${BACKEND_IMAGE} ${FRONTEND_IMAGE} || true
+                            
+                            echo ">>> Checking existing Demo folder before deletion"
+                            ls -ld ~/Demo || echo "No Demo folder found"
+
+                            echo ">>> Deleting existing Demo folder"
                             rm -rf ~/Demo
+
+                            echo ">>> Verifying Demo folder deletion"
+                            ls -ld ~/Demo || echo "Demo folder successfully deleted"
+
+                            echo ">>> Cloning fresh repo"
                             git clone ${GIT_REPO} ~/Demo
+
+                            echo ">>> Listing cloned files"
+                            ls -l ~/Demo
+
                             cd ~/Demo/backend
+                            echo ">>> Building backend image"
                             docker build --no-cache -t ${BACKEND_IMAGE} .
+                            echo ">>> Running backend container"
                             docker run -d -p ${BACKEND_PORT}:8080 --name backend ${BACKEND_IMAGE}
+
                             cd ../frontend
                             if [ -f .env ]; then
                                 chmod +w .env
                                 sed -i "s|http://backend:8080|http://${EC2_HOST}:${BACKEND_PORT}|g" .env
                             fi
+                            echo ">>> Building frontend image"
                             docker build --no-cache -t ${FRONTEND_IMAGE} .
+                            echo ">>> Running frontend container"
                             docker run -d -p ${FRONTEND_PORT}:80 --name frontend ${FRONTEND_IMAGE}
                         '
                     """
