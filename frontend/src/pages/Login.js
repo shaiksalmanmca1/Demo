@@ -48,7 +48,7 @@ const Login = () => {
         }}
       >
         <Typography component="h1" variant="h5">
-          Sign in
+          Login in
         </Typography>
         {error && (
           <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
