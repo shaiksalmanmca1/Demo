@@ -29,7 +29,7 @@ pipeline {
                             echo '>>> Checking existing Demo folder'
                             ls -ld /home/${EC2_USER}/Demo || echo 'No Demo folder'
                             echo '>>> Deleting existing Demo folder'
-                            rm -rf /home/${EC2_USER}/Demo
+                            sudo rm -rf /home/${EC2_USER}/Demo
                             echo '>>> Verifying deletion'
                             ls -ld /home/${EC2_USER}/Demo || echo 'Demo folder deleted'
                             echo '>>> Cloning fresh repo'
